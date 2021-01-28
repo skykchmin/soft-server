@@ -2,12 +2,30 @@ const mysql = require('mysql2/promise');
 const {logger} = require('./winston');
 
 const pool = mysql.createPool({
-    host: '',
-    user: '',
-    port: ,
-    password: '',
-    database: ''
+    host: '13.124.165.208', // 서버 로컬 IP
+    user: 'skykchmin',
+    // port: 3306,
+    password: '1234',
+    database: 'Kream',
+
 });
+
+// pool.query(`select * from 계좌정보`, (err, result, fields)=>{
+//     if(err){
+//         return console.log(err);
+//     }
+//     return console.log(result);
+// })
+
+// const pool = mysql.createPool({ // 기본적인 데이터베이스의 정보 
+//     host: 'localhost',
+//     user: 'skykchmin',
+//     // port: ,
+//     password: '1234',
+//     database: 'Kream'
+// });
+
+console.log('test');
 
 module.exports = {
     pool: pool
