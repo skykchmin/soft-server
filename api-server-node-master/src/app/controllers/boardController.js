@@ -27,37 +27,135 @@ const boardDao = require('../dao/boardDao');
 //         }
 // };
 
+// 구매양식 등록
+// exports.buyShoes = async function (req, res) {
+//     const {
+//         accountnumber, modelID, memberNumber, buyShoesAcceptance, shoesSize, 
+//         buyshoesWay, priceInspection, priceDelivery, deliveryAddress, buyprice, buyEnrollmentTime
+//     } = req.body;
+
+//     if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+//     if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
+//     if (!buyprice) return res.json({isSuccess: false, code: 412, message: "구매가격을 선택해주세요."});
+//     if (!accountnumber) return res.json({isSuccess: false, code: 413, message: "계좌번호를 입력해주세요."});
+//     if (!deliveryAddress) return res.json({isSuccess: false, code: 415, message: "배송주소를 입력해주세요"});
+
+//     try{
+//         const insertbuyShoesInfoParams = [accountnumber, modelID, memberNumber, buyShoesAcceptance, shoesSize, 
+//             buyshoesWay, priceInspection, priceDelivery, deliveryAddress, buyprice, buyEnrollmentTime];     
+//         const insertbuyShoesRows = await boardDao.insertbuyShoesInfo(insertbuyShoesInfoParams); //  await connection.commit(); // COMMIT
+
+//         // connection.release();
+//         return res.json({
+//             isSuccess: true,
+//             code: 200,
+//             message: "구매양식 등록 성공"
+//         });
+//     } catch (err) {
+//         // await connection.rollback(); // ROLLBACK
+//         // connection.release();
+//          logger.error(`App - SignUp Query error\n: ${err.message}`);
+//          return res.status(500).send(`Error: ${err.message}`);
+//      } 
+    
+// };
+
+// 구매양식 등록 후 구매거래내역 보내기
 exports.buyShoes = async function (req, res) {
     const {
-        accountnumber, modelID, memberNumber, buyShoesAcceptance, shoesSize, 
-        buyshoesWay, priceInspection, priceDelivery, deliveryAddress, buyprice, buyEnrollmentTime
+        accountNumber, modelID, memberNumber, buyShoesAcceptance, shoesSize, 
+        buyShoesWay, priceInspection, priceDelivery, deliveryAddress, buyPrice, buyEnrollmentTime, // 구매양식에 필요
+        buyNumber, deliveryNumber, buyStatus, TotalbuyPrice, buyDateTime, calculateDate  // 구매거래내역에 필요
     } = req.body;
 
-    if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
-    if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
-    if (!buyprice) return res.json({isSuccess: false, code: 412, message: "구매가격을 선택해주세요."});
-    if (!accountnumber) return res.json({isSuccess: false, code: 413, message: "계좌번호를 입력해주세요."});
+    if (!accountNumber) return res.json({isSuccess: false, code: 410, message: "계좌번호를 입력해야합니다"});
+    if (!modelID) return res.json({isSuccess: false, code: 411, message: "모델을 선택해주세요."});
+    if (!buyShoesAcceptance) return res.json({isSuccess: false, code: 413, message: "약관에 동의 해주세요"});
+    if (!buyShoesWay) return res.json({isSuccess: false, code: 415, message: "구매방법을 선택해주세요"});
     if (!deliveryAddress) return res.json({isSuccess: false, code: 415, message: "배송주소를 입력해주세요"});
+    if (!buyPrice) return res.json({isSuccess: false, code: 415, message: "구매가격을 선택해주세요"});
+    
 
     try{
-        const insertbuyShoesInfoParams = [ accountnumber, modelID, memberNumber, buyShoesAcceptance, shoesSize, 
-            buyshoesWay, priceInspection, priceDelivery, deliveryAddress, buyprice, buyEnrollmentTime];     
-        const insertbuyShoesRows = await boardDao.insertbuyShoesInfo(insertbuyShoesInfoParams); //  await connection.commit(); // COMMIT
+        const insertbuyShoesInfoParams = [accountNumber, modelID, memberNumber, buyShoesAcceptance, shoesSize, 
+            buyShoesWay, priceInspection, priceDelivery, deliveryAddress, buyPrice, buyEnrollmentTime];     
+        const insertbuyShoesRows = await boardDao.insertbuyShoesInfo(insertbuyShoesInfoParams);  // 구매양식으로 보내기
+        //  await connection.commit(); // COMMIT
+        
+        // 구매양식 등록
+        // if(insertbuyShoesRows != null){
+        //     return res.json({
+        //         isSuccess: true,
+        //         code: 200,
+        //         message: "구매양식 등록 성공"
+        //     });
+        // } 
 
-        // connection.release();
-        return res.json({
-            isSuccess: true,
-            code: 200,
-            message: "구매양식 등록 성공"
-        });
+        const insertbuyShoesHistoryInfoParams = [
+            buyNumber, deliveryNumber, accountNumber, buyStatus, TotalbuyPrice, 
+            buyPrice, priceInspection, priceDelivery, buyDateTime, calculateDate,  
+            deliveryAddress, buyShoesWay, memberNumber, shoesSize, modelID];     
+
+        const insertbuyShoesHistoryRows = await boardDao.insertbuyShoesHistoryInfo(insertbuyShoesHistoryInfoParams); // 판매거래내역 보내기
+        //  await connection.commit(); // COMMIT
+        if(insertbuyShoesHistoryRows != null){
+            return res.json({
+                isSuccess: true,
+                code: 200,
+                message: "구매거래내역 보내기 성공"
+            })
+        }                
     } catch (err) {
         // await connection.rollback(); // ROLLBACK
         // connection.release();
          logger.error(`App - SignUp Query error\n: ${err.message}`);
          return res.status(500).send(`Error: ${err.message}`);
-     } 
+    }
+
+};
+
+// 판매거래내역으로 보내기
+exports.sellShoesHistory = async function (req, res) {
+    const {
+        sellNumber, deliveryNumber, accountNumber, sellStatus, TotalsellPrice, 
+        sellPrice, priceInspection, priceDelivery, sellDateTime, calculateDate,  
+        deliveryAddress, sellShoesWay, memberNumber, shoesSize, modelID
+    } = req.body;
+
+    // 배송번호에 보내져야할 것: deliveryNumber, buyNumber, sellNumber, drawNumber, deliveryDate, departureDeliveryAddress, arriveDeliveryAddress, arriveAddressPhoneNumber, deliveryStatus
+
+    if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+    if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
+    if (!sellPrice) return res.json({isSuccess: false, code: 412, message: "판매가격을 선택해주세요."});
+    if (!accountNumber) return res.json({isSuccess: false, code: 413, message: "계좌번호를 입력해주세요."});
+    if (!deliveryAddress) return res.json({isSuccess: false, code: 415, message: "배송주소를 입력해주세요"});
+
+    try{
+        const insertsellShoesHistoryInfoParams = [
+            sellNumber, deliveryNumber, accountNumber, sellStatus, TotalsellPrice, 
+            sellPrice, priceInspection, priceDelivery, sellDateTime, calculateDate,  
+            deliveryAddress, sellShoesWay, memberNumber, shoesSize, modelID];     
+        const insertsellShoesHistoryRows = await boardDao.insertsellShoesHistoryInfo(insertsellShoesHistoryInfoParams); //  await connection.commit(); // COMMIT
+          
+        // connection.release();
+        return res.json({
+            isSuccess: true,
+            code: 200,
+            message: "판매거래양식 등록 성공",
+            data: insertsellShoesHistoryRows
+        });
+
+        
+
+    } catch (err) {
+        // await connection.rollback(); // ROLLBACK
+        // connection.release();
+         logger.error(`App - SignUp Query error\n: ${err.message}`);
+         return res.status(500).send(`Error: ${err.message}`);
+    } 
     
 };
+
 
 // 판매양식 등록
 // exports.sellShoes = async function (req, res) {
@@ -109,23 +207,25 @@ exports.sellShoes = async function (req, res) {
     try{
         const insertsellShoesInfoParams = [accountNumber, modelID, memberNumber, sellShoesAcceptance, shoesSize, 
             sellShoesWay, priceInspection, priceDelivery, deliveryAddress, sellPrice, sellEnrollmentTime];     
-        const insertsellShoesRows = await boardDao.insertsellShoesInfo(insertsellShoesInfoParams); //  await connection.commit(); // COMMIT
+        const insertsellShoesRows = await boardDao.insertsellShoesInfo(insertsellShoesInfoParams);  // 판매양식으로 보내기
+        //  await connection.commit(); // COMMIT
         
         // 판매양식 등록
-        if(insertsellShoesRows != null){
-            return res.json({
-                isSuccess: true,
-                code: 200,
-                message: "판매양식 등록 성공"
-            });
-        } 
+        // if(insertsellShoesRows != null){
+        //     return res.json({
+        //         isSuccess: true,
+        //         code: 200,
+        //         message: "판매양식 등록 성공"
+        //     });
+        // } 
 
         const insertsellShoesHistoryInfoParams = [
             sellNumber, deliveryNumber, accountNumber, sellStatus, TotalsellPrice, 
             sellPrice, priceInspection, priceDelivery, sellDateTime, calculateDate,  
             deliveryAddress, sellShoesWay, memberNumber, shoesSize, modelID];     
 
-        const insertsellShoesHistoryRows = await boardDao.insertsellShoesHistoryInfo(insertsellShoesHistoryInfoParams); //  await connection.commit(); // COMMIT
+        const insertsellShoesHistoryRows = await boardDao.insertsellShoesHistoryInfo(insertsellShoesHistoryInfoParams); // 판매거래내역 보내기
+        //  await connection.commit(); // COMMIT
         if(insertsellShoesHistoryRows != null){
             return res.json({
                 isSuccess: true,
@@ -140,7 +240,6 @@ exports.sellShoes = async function (req, res) {
          return res.status(500).send(`Error: ${err.message}`);
     }
 
-    
 };
 
 
@@ -186,15 +285,17 @@ exports.sellShoesHistory = async function (req, res) {
     
 };
 
-
-
 exports.drawShoes = async function (req, res) {
     // 드로우양식(계좌번호, 모델ID, 회원번호, 구매가격, 응모기간,배송비, 배송주소, 총결제금액, 입찰일)
     const {
         accountnumber, modelID, memberNumber, buyPrice, drawPeriod, priceDelivery, deliveryAddress, Totalbuyprice, drawDate
     } = req.body;
-
-    if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+    if (!accountnumber) return res.json({isSuccess: false, code: 410, message: "계좌번호를 입력해주세요"});
+    if (!modelID) return res.json({isSuccess: false, code: 411, message: "신발을 선택해주세요"});
+    if (!buyPrice) return res.json({isSuccess: false, code: 411, message: "구매가격을 입력해주세요"});
+    if (!drawPeriod) return res.json({isSuccess: false, code: 411, message: "응모기간을 입력해주세요"});
+    if (!priceDelivery) return res.json({isSuccess: false, code: 411, message: "신발배송을 입력해주세요"});
+    if (!deliveryAddress) return res.json({isSuccess: false, code: 411, message: "배송주소를 입력해주세요"});
     try{
         const insertdrawShoesInfoParams = [accountnumber, modelID, memberNumber, buyPrice, drawPeriod, priceDelivery, deliveryAddress, Totalbuyprice, drawDate];     
         const insertdrawShoesRows = await boardDao.insertdrawShoesInfo(insertdrawShoesInfoParams); //  await connection.commit(); // COMMIT
@@ -230,7 +331,6 @@ exports.deliveryShoes = async function (req, res) {
             departureDeliveryAddress, arriveDeliveryAddress, arriveAddressPhoneNumber, deliveryStatus];     
         const insertdeliveryShoesRows = await boardDao.insertdeliveryShoesInfo(insertdeliveryShoesInfoParams); //  await connection.commit(); // COMMIT
         
-        // console.log(insertdeliveryShoesRows[9]);
         // connection.release();
         return res.json({
             isSuccess: true,
@@ -245,6 +345,150 @@ exports.deliveryShoes = async function (req, res) {
      } 
     
 };
+
+// 신발 검수 
+exports.testShoes = async function (req, res) {
+    const {
+        sellNumber, deliveryNumber, compilanceStandardStatus, pollutionStandardStatus, penaltyStatus, inspectorName, modelID
+    } = req.body;
+
+    if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+    if (!sellNumber) return res.json({isSuccess: false, code: 411, message: "판매번호를 입력해주세요"});
+    if (!deliveryNumber) return res.json({isSuccess: false, code: 412, message: "배송번호를 입력해주세요"});
+    if (!compilanceStandardStatus) return res.json({isSuccess: false, code: 413, message: "상태기준준수여부를 입력해주세요"});    
+    if (!pollutionStandardStatus) return res.json({isSuccess: false, code: 415, message: "오염도기준준수여부를 입력해주세요"});
+    if (!penaltyStatus) return res.json({isSuccess: false, code: 416, message: "페널티여부를 입력해주세요"});
+    if (!inspectorName) return res.json({isSuccess: false, code: 417, message: "검수담당자를 입력해주세요"});
+    
+    try{
+        const inserttestShoesInfoParams = [sellNumber, deliveryNumber, compilanceStandardStatus, pollutionStandardStatus, penaltyStatus, inspectorName, modelID];     
+        const inserttestShoesRows = await boardDao.inserttestShoesInfo(inserttestShoesInfoParams); //  await connection.commit(); // COMMIT
+
+        // connection.release();
+        return res.json({
+            isSuccess: true,
+            code: 200,
+            message: "신발 검수 양식 등록 성공"
+        });
+    } catch (err) {
+        // await connection.rollback(); // ROLLBACK
+        // connection.release();
+         logger.error(`App - SignUp Query error\n: ${err.message}`);
+         return res.status(500).send(`Error: ${err.message}`);
+     } 
+    
+};
+
+// 직접배송 입력
+exports.directDeliveryShoes = async function (req, res) {
+    // 직접배송(배송번호, 용역금액, 택배업체사업자번호, 택배업체명, 택배원이름, 택배원전화번호, 배송진행상황)
+    const {
+        deliveryNumber, deliveryServicePrice, deliveryCompanyNumber, deliveryCompanyName, deliveryPersonName, deliveryPersonPhoneNumber, deliveryStatus
+    } = req.body;
+
+    // if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+    // if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
+    // if (!sellPrice) return res.json({isSuccess: false, code: 412, message: "판매가격을 선택해주세요."});
+    // if (!accountNumber) return res.json({isSuccess: false, code: 413, message: "계좌번호를 입력해주세요."});
+    // if (!deliveryAddress) return res.json({isSuccess: false, code: 415, message: "배송주소를 입력해주세요"});
+
+    try{ 
+        const insertdirectDeliveryShoesInfoParams = [deliveryNumber, deliveryServicePrice, deliveryCompanyNumber, deliveryCompanyName, deliveryPersonName, deliveryPersonPhoneNumber, deliveryStatus];     
+        const insertdirectDeliveryShoesRows = await boardDao.insertdirectDeliveryShoesInfo(insertdirectDeliveryShoesInfoParams); //  await connection.commit(); // COMMIT
+        
+        // 판매양식 등록
+        if(insertdirectDeliveryShoesRows != null){
+            return res.json({
+                isSuccess: true,
+                code: 200,
+                message: "직접배송등록 성공"
+            });
+        } 
+            
+    } catch (err) {
+        // await connection.rollback(); // ROLLBACK
+        // connection.release();
+         logger.error(`App - SignUp Query error\n: ${err.message}`);
+         return res.status(500).send(`Error: ${err.message}`);
+    }
+
+    
+};
+
+// 택배업체 
+exports.deliveryCompany = async function (req, res) {
+    // 택배업체(택배업체사업자번호, 택배업체명, 택배업체전화번호, 택배업체주소)
+    const {
+        deliveryCompanyNumber, deliveryCompanyName, deliveryCompanyPhoneNumber, deliveryCompanyAddress
+    } = req.body;
+
+    // if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+    // if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
+    // if (!sellPrice) return res.json({isSuccess: false, code: 412, message: "판매가격을 선택해주세요."});
+    // if (!accountNumber) return res.json({isSuccess: false, code: 413, message: "계좌번호를 입력해주세요."});
+    // if (!deliveryAddress) return res.json({isSuccess: false, code: 415, message: "배송주소를 입력해주세요"});
+
+    try{ 
+        const insertdeliveryCompanyInfoParams = [deliveryCompanyNumber, deliveryCompanyName, deliveryCompanyPhoneNumber, deliveryCompanyAddress];     
+        const insertdeliveryCompanyRows = await boardDao.insertdeliveryCompanyInfo(insertdeliveryCompanyInfoParams); //  await connection.commit(); // COMMIT
+        
+        // 판매양식 등록
+        if(insertdeliveryCompanyRows != null){
+            return res.json({
+                isSuccess: true,
+                code: 200,
+                message: "택배업체등록 성공"
+            });
+        } 
+            
+    } catch (err) {
+        // await connection.rollback(); // ROLLBACK
+        // connection.release();
+         logger.error(`App - SignUp Query error\n: ${err.message}`);
+         return res.status(500).send(`Error: ${err.message}`);
+    }
+
+    
+};
+
+// 정산관리
+exports.calculateShoes = async function (req, res) {
+    // 택배업체(택배업체사업자번호, 택배업체명, 택배업체전화번호, 택배업체주소)
+    const {
+        calculateNumber, calculateDate, calculateMoney, calculateStatus, accountNumber, bankName, accountName, deliveryCompanyNumber
+    } = req.body;
+
+    // if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
+    // if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
+    // if (!sellPrice) return res.json({isSuccess: false, code: 412, message: "판매가격을 선택해주세요."});
+    // if (!accountNumber) return res.json({isSuccess: false, code: 413, message: "계좌번호를 입력해주세요."});
+    // if (!deliveryAddress) return res.json({isSuccess: false, code: 415, message: "배송주소를 입력해주세요"});
+
+    try{ 
+        const insertcalculateShoesInfoParams = [calculateNumber, calculateDate, calculateMoney, calculateStatus, accountNumber, bankName, accountName, deliveryCompanyNumber];     
+        const insertcalculateShoesInfoRows = await boardDao.insertcalculateShoesInfo(insertcalculateShoesInfoParams); //  await connection.commit(); // COMMIT
+        
+        console.log(insertcalculateShoesInfoRows);
+        // 판매양식 등록
+        if(insertcalculateShoesInfoRows != null){
+            return res.json({
+                isSuccess: true,
+                code: 200,
+                message: "정산관리 성공"
+            });
+        } 
+            
+    } catch (err) {
+        // await connection.rollback(); // ROLLBACK
+        // connection.release();
+         logger.error(`App - SignUp Query error\n: ${err.message}`);
+         return res.status(500).send(`Error: ${err.message}`);
+    }
+
+    
+};
+
+
 
 
 
@@ -333,10 +577,11 @@ exports.patchbuyShoes = async function (req, res) {
     } = req.body;
 
     if (!accountNumber) return res.json({isSuccess: false, code: 410, message: "계좌번호를 입력해주세요."});
-    if (!buyNumber) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
+    if (!shoesSize) return res.json({isSuccess: false, code: 411, message: "신발사이즈를 선택해주세요."});
     if (!buyshoesWay) return res.json({isSuccess: false, code: 412, message: "구매방법을 선택해주세요."});
     if (!deliveryAddress) return res.json({isSuccess: false, code: 413, message: "배송주소를 입력해주세요."});
-    if (!buyNumber) return res.json({isSuccess: false, code: 415, message: "구매번호를 입력해주세요"});
+    if (!buyPrice) return res.json({isSuccess: false, code: 414, message: "구매번호를 입력해주세요"});
+    if (!buyNumber) return res.json({isSuccess: false, code: 415, message: "구매가격을 입력해주세요"});
 
     try{
         const patchbuyShoesInfoParams = [ accountNumber,shoesSize, buyshoesWay, deliveryAddress, buyPrice, buyEnrollmentTime, buyNumber];     
@@ -526,44 +771,6 @@ exports.getdrawShoes = async function (req, res) {
     
 };
 
-
-
-// 신발 검수 
-exports.testShoes = async function (req, res) {
-    const {
-        sellNumber, deliveryNumber, compilanceStandardStatus, pollutionStandardStatus, penaltyStatus, inspectorName, modelID
-    } = req.body;
-
-    if (!modelID) return res.json({isSuccess: false, code: 410, message: "신발을 선택해주세요."});
-    if (!sellNumber) return res.json({isSuccess: false, code: 411, message: "판매번호를 입력해주세요"});
-    if (!deliveryNumber) return res.json({isSuccess: false, code: 412, message: "배송번호를 입력해주세요"});
-    if (!compilanceStandardStatus) return res.json({isSuccess: false, code: 413, message: "상태기준준수여부를 입력해주세요"});    
-    if (!pollutionStandardStatus) return res.json({isSuccess: false, code: 415, message: "오염도기준준수여부를 입력해주세요"});
-    if (!penaltyStatus) return res.json({isSuccess: false, code: 416, message: "페널티여부를 입력해주세요"});
-    if (!inspectorName) return res.json({isSuccess: false, code: 417, message: "검수담당자를 입력해주세요"});
-    
-    try{
-        const inserttestShoesInfoParams = [sellNumber, deliveryNumber, compilanceStandardStatus, pollutionStandardStatus, penaltyStatus, inspectorName, modelID];     
-        const inserttestShoesRows = await boardDao.inserttestShoesInfo(inserttestShoesInfoParams); //  await connection.commit(); // COMMIT
-
-        // connection.release();
-        return res.json({
-            isSuccess: true,
-            code: 200,
-            message: "신발 검수 양식 등록 성공"
-        });
-    } catch (err) {
-        // await connection.rollback(); // ROLLBACK
-        // connection.release();
-         logger.error(`App - SignUp Query error\n: ${err.message}`);
-         return res.status(500).send(`Error: ${err.message}`);
-     } 
-    
-};
-
-
-
-
 // 메인
 exports.getMain = async function (req, res) {
     try {    
@@ -589,7 +796,7 @@ exports.getMain = async function (req, res) {
             } else {
                 return res.json({ // 게시물이 존재하지 않는다면 
                     isSuccess: false,
-                    code: 300,
+                    code: 400,
                     message: "메인이 존재하지 않습니다"
                     });
             } 

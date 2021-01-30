@@ -18,31 +18,31 @@ exports.signUp = async function (req, res) {
         email, password, shoesSize, nickname, signUpAcceptance 
     } = req.body;
 
-    if (!email) return res.json({isSuccess: false, code: 301, message: "이메일을 입력해주세요."});
+    if (!email) return res.json({isSuccess: false, code: 411, message: "이메일을 입력해주세요."});
     if (email.length > 30) return res.json({
         isSuccess: false,
-        code: 302,
+        code: 412,
         message: "이메일은 30자리 미만으로 입력해주세요."
     });
 
-    if (!regexEmail.test(email)) return res.json({isSuccess: false, code: 303, message: "이메일을 형식을 정확하게 입력해주세요."});
+    if (!regexEmail.test(email)) return res.json({isSuccess: false, code: 413, message: "이메일을 형식을 정확하게 입력해주세요."});
 
-    if (!password) return res.json({isSuccess: false, code: 304, message: "비밀번호를 입력 해주세요."});
+    if (!password) return res.json({isSuccess: false, code: 414, message: "비밀번호를 입력 해주세요."});
     if (password.length < 6 || password.length > 20) return res.json({
         isSuccess: false,
-        code: 305,
+        code: 415,
         message: "비밀번호는 6~20자리를 입력해주세요."
     });
 
-    if (!nickname) return res.json({isSuccess: false, code: 306, message: "닉네임을 입력 해주세요."});
+    if (!nickname) return res.json({isSuccess: false, code: 416, message: "닉네임을 입력 해주세요."});
     if (nickname.length > 20) return res.json({
         isSuccess: false,
-        code: 307,
+        code: 417,
         message: "닉네임은 최대 20자리를 입력해주세요."
     });
 
     // 
-    if(!signUpAcceptance) return res.json({isSuccess: false, code: 462, message: "약관을 동의해야합니다"});
+    if(!signUpAcceptance) return res.json({isSuccess: false, code: 418, message: "약관을 동의해야합니다"});
 
         try {
             // 이메일 중복 확인
@@ -51,7 +51,7 @@ exports.signUp = async function (req, res) {
 
                 return res.json({
                     isSuccess: false,
-                    code: 308,
+                    code: 419,
                     message: "중복된 이메일입니다."
                 });
             }
@@ -61,7 +61,7 @@ exports.signUp = async function (req, res) {
             if (nicknameRows.length > 0) {
                 return res.json({
                     isSuccess: false,
-                    code: 309,
+                    code: 420,
                     message: "중복된 닉네임입니다."
                 });
             }
@@ -300,9 +300,11 @@ exports.patchUser = async function (req, res) {
         emailID, shoesSize, memberAddress, nickname, memberName, signUpAcceptance, userNumber 
     } = req.body;
 
-    if (!accountnumber) return res.json({isSuccess: false, code: 401, message: "계좌번호를 입력해주세요."});
-    if (!bankname) return res.json({isSuccess: false, code: 400, message: "은행명을 선택해주세요."});
-    if (!accountname) return res.json({isSuccess: false, code: 402, message: "예금주를 입력해주세요."});
+    if (!emailID) return res.json({isSuccess: false, code: 411, message: "이메일ID를 입력해주세요"});
+    if (!shoesSize) return res.json({isSuccess: false, code: 412, message: "스니커즈 사이즈를 입력해주세요."});
+    if (!memberAddress) return res.json({isSuccess: false, code: 413, message: "회원주소를 입력해주세요."});
+    if (!nickname) return res.json({isSuccess: false, code: 414, message: "닉네임을 입력해주세요."});
+    if (!signUpAcceptance) return res.json({isSuccess: false, code: 415, message: "약관을 동의해주세요"});
 
     try{
         const patchUserInfoParams = [ emailID, shoesSize, memberAddress, nickname, memberName, signUpAcceptance, userNumber];     

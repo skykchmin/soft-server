@@ -20,9 +20,13 @@ module.exports = function(app){
     app.route('/board/getsellShoes').get(board.getsellShoes); // 판매 양식 조회
     app.route('/board/getdrawShoes').get(board.getdrawShoes); // 드로우 양식 조회 
  
-    app.route('/board/sellShoesHistory').post(board.sellShoesHistory); // 판매 양식 생성
+    app.route('/board/buyShoesHistory').post(board.buyShoesHistory); // 판매거래내역 생성
+    app.route('/board/sellShoesHistory').post(board.sellShoesHistory); // 판매거래내역 생성
 
     app.route('/board/deliveryShoes').post(board.deliveryShoes); // 배송관리 생성
+    app.route('/board/directDeliveryShoes').post(board.directDeliveryShoes); // 직접배송 생성
+    app.route('/board/deliveryCompany').post(board.deliveryCompany); // 택배업체 생성
+    app.route('/board/calculateShoes').post(board.calculateShoes); // 직접배송 생성
 
     // app.get('/app/board', board.getBoard); // apt.get으로 접근하게 된다면 board의 selectBoard가 명시가 됩니다. 
 };

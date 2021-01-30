@@ -31,6 +31,21 @@ async function insertbuyShoesInfo(insertbuyShoesInfoParams) {
   return insertbuyShoesInfoRow;
 }
 
+// 구매거래내역으로 보내기(insert)
+async function insertbuyShoesHistoryInfo(insertbuyShoesHistoryInfoParams) {
+  const connection = await pool.getConnection(async (conn) => conn);
+    const insertbuyShoesHistoryInfoQuery = `
+    insert into 구매거래내역(구매번호, 배송번호, 계좌번호, 구매진행상황, 총정산금액, 구매가격, 검수비, 배송비, 거래일시, 정산일, 배송주소, 구매방법, 회원번호, 스니커즈사이즈, 모델ID)
+    values ( ?, ?, ?, ?, ?, ?, ?, ?, default, ?, ?, ?, ?, ?, ?);
+    `;  
+  const insertbuyShoesHistoryInfoRow = await connection.query(
+    insertbuyShoesHistoryInfoQuery,
+    insertbuyShoesHistoryInfoParams
+  );
+  connection.release();
+  return insertbuyShoesHistoryInfoRow;
+}
+
 // sellshoes
 async function insertsellShoesInfo(insertsellShoesInfoParams) {
   const connection = await pool.getConnection(async (conn) => conn);
@@ -75,23 +90,6 @@ async function insertdrawShoesInfo(insertdrawShoesInfoParams) {
   );
   connection.release();
   return insertdrawShoesInfoRow;
-}
-
-
-async function userNicknameCheck(nickname) {
-  const connection = await pool.getConnection(async (conn) => conn);
-  const selectNicknameQuery = `
-                SELECT 이메일ID, 비밀번호
-                FROM 회원정보 
-                WHERE 프로필이름 = ?;
-                `;
-  const selectNicknameParams = [nickname];
-  const [nicknameRows] = await connection.query(
-    selectNicknameQuery,
-    selectNicknameParams
-  );
-  connection.release();
-  return nicknameRows;
 }
 
 // 구매양식 삭제
@@ -142,7 +140,6 @@ async function deletedrawShoesInfo(deletedrawShoesParams) {
 // 구매양식 수정
 async function patchbuyShoesInfo(patchbuyShoesInfoParams) {
   //accountNumber,shoesSize, buyshoesWay, deliveryAddress, buyPrice, buyEnrollmentTime, buyNumber
-
   const connection = await pool.getConnection(async (conn) => conn);
     const patchbuyShoesInfoQuery = `
       update 구매양식
@@ -336,6 +333,57 @@ async function insertdeliveryShoesInfo(insertdeliveryShoesInfoParams) {
   return insertdeliveryShoesInfoRow;
 }
 
+// 직접배송 입력
+async function insertdirectDeliveryShoesInfo(insertdirectDeliveryShoesInfoParams) {
+  const connection = await pool.getConnection(async (conn) => conn);
+    const insertdirectDeliveryShoesInfoQuery = `
+    insert into 직접배송(배송번호, 용역금액, 택배업체명, 택배업체사업자번호, 택배원이름, 택배원전화번호, 배송진행상황)
+    values(?, ?, ?, ?, ?, ?, ?)
+    ;
+
+    `;  
+  const insertdirectDeliveryShoesInfoRows = await connection.query(
+    insertdirectDeliveryShoesInfoQuery,
+    insertdirectDeliveryShoesInfoParams
+  );
+  connection.release();
+  return insertdirectDeliveryShoesInfoRows;
+}
+
+// 택배업체 입력
+async function insertdeliveryCompanyInfo(insertdeliveryCompanyInfoParams) {
+  const connection = await pool.getConnection(async (conn) => conn);
+    const insertdeliveryCompanyInfoQuery = `
+    insert into 택배업체(택배업체사업자번호, 택배업체명, 택배업체전화번호, 택배업체주소)
+    values(?, ?, ?, ?)
+    ;
+
+    `;  
+  const insertdeliveryCompanyInfoRows = await connection.query(
+    insertdeliveryCompanyInfoQuery,
+    insertdeliveryCompanyInfoParams
+  );
+  connection.release();
+  return insertdeliveryCompanyInfoRows;
+}
+
+// 정산관리 입력
+async function insertcalculateShoesInfo(insertcalculateShoesParams) {
+  const connection = await pool.getConnection(async (conn) => conn);
+    const insertcalculateShoesQuery = `
+    insert into 정산관리(정산번호, 정산일, 정산금액, 정산여부, 계좌번호, 은행명, 예금주, 택배업체사업자번호)
+    values(?, ?, ?, ?, ?, ?, ?, ?)
+    ;
+
+    `;  
+  const insertcalculateShoesRows = await connection.query(
+    insertcalculateShoesQuery,
+    insertcalculateShoesParams
+  );
+  connection.release();
+  return insertcalculateShoesRows;
+}
+
 module.exports = {
   insertbuyShoesInfo,
   insertsellShoesInfo,
@@ -351,6 +399,11 @@ module.exports = {
   selectsellShoeslistInfo,
   selectdrawShoeslistInfo,
   selectMainInfo,
+  insertbuyShoesHistoryInfo,
   insertsellShoesHistoryInfo,
   insertdeliveryShoesInfo,
+  insertdirectDeliveryShoesInfo,
+  insertdeliveryCompanyInfo,
+  insertcalculateShoesInfo,
+  
 };
